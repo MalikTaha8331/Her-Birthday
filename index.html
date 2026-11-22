@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Happy Birthday</title>
+<style>
+  :root {
+    --bg: #fbf4ff; --card: rgba(255,255,255,0.85); --text: #2d1b3d;
+    --muted: #6b5a78; --accent: #c2185b; --accent2: #7b1fa2; --soft: #f3e5f5;
+    --shadow: 0 10px 30px rgba(123,31,162,0.12);
+  }
+  [data-theme="dark"] {
+    --bg: #14101c; --card: rgba(38,30,52,0.9); --text: #f3ecff;
+    --muted: #b8a9c9; --accent: #ff6fa5; --accent2: #b98cff; --soft: #2a2140;
+    --shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+  }
+  a { color: var(--accent); }
+
+  /* Navigation */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--card); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--soft); box-shadow: var(--shadow);
+    display: flex; gap: 6px; overflow-x: auto; padding: 10px 12px;
+    scrollbar-width: thin;
+  }
+  nav a {
+    flex: 0 0 auto; text-decoration: none; color: var(--text);
+    padding: 7px 14px; border-radius: 999px; font-size: 0.9rem;
+    background: var(--soft); white-space: nowrap;
+  }
+  nav a.active { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff; }
+  #theme-btn { border: none; cursor: pointer; font-size: 0.9rem; }
+
+  /* Pages */
+  main { max-width: 760px; margin: 0 auto; padding: 24px 18px 60px; }
+  .page { display: none; animation: fade 0.4s ease; }
+  .page.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .hero { text-align: center; padding: 30px 10px 10px; }
+  h1 { font-size: 2.3rem; margin: 0 0 8px; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  h2 { font-size: 1.5rem; margin: 0 0 12px; color: var(--accent); }
+  .lead { color: var(--muted); font-style: italic; }
+
+  .card {
+    background: var(--card); border-radius: 20px; padding: 24px;
+    margin-bottom: 18px; box-shadow: var(--shadow);
+  }
+  ul { padding-left: 20px; margin: 0; }
+  li { margin-bottom: 8px; }
+
+  button, .btn {
+    background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff;
+    border: none; border-radius: 999px; padding: 10px 20px; font-size: 0.95rem;
+    cursor: pointer; margin: 4px; text-decoration: none; display: inline-block;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  input[type="text"], textarea {
+    width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--soft);
+    background: var(--bg); color: var(--text); font: inherit;
+  }
+  textarea { min-height: 110px; }
+
+  /* Countdown */
+  .countdown { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 22px 0; }
+  .countdown div { background: var(--card); border-radius: 16px; padding: 14px 16px; min-width: 84px; box-shadow: var(--shadow); }
+  .countdown span { display: block; font-size: 1.9rem; font-weight: bold; color: var(--accent); }
+  #reveal { display: none; font-size: 1.6rem; font-weight: bold; color: var(--accent); margin-top: 12px; text-align: center; }
+
+  /* Gallery */
+  .photo-wrap { text-align: center; }
+  .photo-wrap img { width: 100%; max-height: 460px; object-fit: contain; border-radius: 16px; background: #000; }
+  .story-text { margin: 12px 0; min-height: 2.5em; }
+
+  /* Timeline */
+  .timeline { border-left: 3px solid var(--accent2); padding-left: 20px; }
+  .event { position: relative; margin-bottom: 20px; }
+  .event::before { content: ""; position: absolute; left: -29px; top: 6px; width: 14px; height: 14px; background: var(--accent); border-radius: 50%; }
+  .event small { color: var(--muted); }
+
+  /* Wish jar */
+  #wish-text { font-size: 1.25rem; min-height: 3em; text-align: center; margin: 14px 0; }
+
+  /* Letter lock */
+  .locked { text-align: center; padding: 30px; }
+  #letter-content { display: none; }
+
+  /* Games */
+  #memory { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  #memory button { margin: 0; height: 66px; font-size: 1.7rem; border-radius: 14px; background: var(--soft); color: var(--text); }
+  #memory button.open { background: var(--card); }
+  #memory button.done { opacity: 0.4; }
+  #catch-area { position: relative; height: 300px; border-radius: 16px; overflow: hidden; background: var(--soft); margin-bottom: 10px; }
+  .heart-drop { position: absolute; font-size: 1.8rem; cursor: pointer; user-select: none; }
+
+  /* Plans */
+  .plan { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .plan input { width: 20px; height: 20px; }
+
+  /* Stats */
+  .stats { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 14px; text-align: center; }
+  .stats div span { display: block; font-size: 2rem; font-weight: bold; color: var(--accent); }
+
+  /* Music visualizer */
+  .visualizer { display: flex; align-items: flex-end; justify-content: center; gap: 6px; height: 80px; margin: 16px 0; }
+  .visualizer span { width: 10px; height: 20px; background: linear-gradient(var(--accent), var(--accent2)); border-radius: 6px; }
+  .playing .visualizer span { animation: bounce 0.8s ease-in-out infinite; }
+  .visualizer span:nth-child(2) { animation-delay: 0.1s; }
+  .visualizer span:nth-child(3) { animation-delay: 0.2s; }
+  .visualizer span:nth-child(4) { animation-delay: 0.3s; }
+  .visualizer span:nth-child(5) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,100% { height: 20px; } 50% { height: 80px; } }
+  audio { width: 100%; margin-top: 10px; }
+
+  #card-canvas { width: 100%; border-radius: 16px; margin-top: 12px; display: none; }
+
+  /* Reactions */
+  .reactions { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .reactions button { background: var(--soft); color: var(--text); margin: 0; font-size: 1.1rem; padding: 8px 14px; }
+  .reactions button.reacted { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff; }
+
+  /* Full-screen heart animation */
+  #heart-overlay { position: fixed; inset: 0; z-index: 50; background: #14010f; display: none; overflow: hidden; }
+  #heart-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #heart-msg {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 60vw; max-width: 460px; text-align: center; color: #fff;
+    font-size: clamp(1.4rem, 4.5vw, 2.4rem); font-weight: bold; line-height: 1.3;
+    text-shadow: 0 0 14px rgba(255,80,150,0.8); pointer-events: none;
+  }
+  #heart-close {
+    position: absolute; top: 14px; right: 14px; z-index: 2;
+    background: rgba(255,255,255,0.15); color: #fff; width: 44px; height: 44px; padding: 0; font-size: 1.2rem;
+  }
+  #heart-replay { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 2; }
+
+  footer { text-align: center; padding: 30px 20px 50px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#home">🏠 Home</a>
+  <a href="#about">💗 About</a>
+  <a href="#food">🍰 Food</a>
+  <a href="#places">📍 Places</a>
+  <a href="#hobbies">📚 Hobbies</a>
+  <a href="#photos">📸 Photos</a>
+  <a href="#wishes">🫙 Wishes</a>
+  <a href="#games">🎮 Games</a>
+  <a href="#plans">✈️ Plans</a>
+  <a href="#facts">📊 Facts</a>
+  <a href="#music">🎵 Music</a>
+  <a href="#voice">🎙️ Voice</a>
+  <a href="#ask">💬 Ask me</a>
+  <a href="#share">🖼️ Share</a>
+  <a href="#heart">💖 Heart</a>
+  <button id="theme-btn">🌓 Theme</button>
+</nav>
+
+<main>
+
+  <!-- HOME: live countdown with midnight reveal -->
+  <div class="page" id="home">
+    <div class="hero">
+      <h1>Happy Birthday, <span class="name">Aiza</span></h1>
+      <p class="lead" id="teaser">Something special is almost here...</p>
+    </div>
+    <div class="countdown" id="countdown">
+      <div><span id="d">--</span>Days</div>
+      <div><span id="h">--</span>Hours</div>
+      <div><span id="m">--</span>Minutes</div>
+      <div><span id="s">--</span>Seconds</div>
+    </div>
+    <div id="reveal">Happy Birthday, <span class="name">Aiza</span>! 🎉</div>
+    <div class="card" style="margin-top:24px">
+      <h2>Welcome</h2>
+      <p>This little site is made just for you. Use the menu above to explore every surprise I made.</p>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="page" id="about">
+    <div class="card">
+      <h2>About you</h2>
+      <p>Born on 23 November 2000. The most wonderful person I know, my love of my life, and the one I plan my future around.</p>
+    </div>
+  </div>
+
+  <!-- FOOD -->
+  <div class="page" id="food">
+    <div class="card">
+      <h2>Your favorite foods</h2>
+      <ul>
+        <li>Desserts, always the sweet ending to every day</li>
+        <li>Chowmein, the perfect food for every mood</li>
+        <li>Biryani made by your mother's hands, the best in the world</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PLACES -->
+  <div class="page" id="places">
+    <div class="card">
+      <h2>Places we love together</h2>
+      <ul>
+        <li>Lok Virsa</li>
+        <li>Centaurus Mall</li>
+        <li>Ayub Park</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- HOBBIES -->
+  <div class="page" id="hobbies">
+    <div class="card">
+      <h2>What you love doing</h2>
+      <ul>
+        <li>Reading novels, lost in another world</li>
+        <li>Watching Korean dramas</li>
+        <li>Watching Suits and admiring the dresses</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PHOTOS: slideshow with tap-to-read stories -->
+  <div class="page" id="photos">
+    <div class="card photo-wrap">
+      <h2>Our photos</h2>
+      <img id="photo" src="" alt="Photo of us">
+      <p class="story-text" id="story-text"></p>
+      <button id="prev">← Previous</button>
+      <button id="reveal-story">Tap to read the story</button>
+      <button id="next">Next →</button>
+    </div>
+  </div>
+
+  <!-- WISHES: wish jar -->
+  <div class="page" id="wishes">
+    <div class="card">
+      <h2>Wish jar</h2>
+      <p>Tap the jar to take out a wish.</p>
+      <div id="wish-text"></div>
+      <div style="text-align:center"><button id="jar">🫙 Pick a wish</button></div>
+    </div>
+  </div>
+
+  <!-- GAMES -->
+  <div class="page" id="games">
+    <div class="card">
+      <h2>Game 1: Memory match</h2>
+      <p>Find all the matching pairs.</p>
+      <div id="memory"></div>
+      <p id="memory-status"></p>
+      <div style="text-align:center"><button id="memory-reset">Restart</button></div>
+    </div>
+    <div class="card">
+      <h2>Game 2: Catch the hearts</h2>
+      <p>Tap as many hearts as you can in 20 seconds.</p>
+      <div id="catch-area"></div>
+      <p>Score: <strong id="catch-score">0</strong> | Time: <strong id="catch-time">20</strong>s</p>
+      <div style="text-align:center"><button id="catch-start">Start</button></div>
+    </div>
+  </div>
+
+  <!-- PLANS -->
+  <div class="page" id="plans">
+    <div class="card">
+      <h2>Our future plans</h2>
+      <div class="plan"><input type="checkbox" id="p1"><label for="p1">Trip to Murree together</label></div>
+      <div class="plan"><input type="checkbox" id="p2"><label for="p2">Cook biryani with your mother</label></div>
+      <div class="plan"><input type="checkbox" id="p3"><label for="p3">Read a novel together</label></div>
+      <div class="plan"><input type="checkbox" id="p4"><label for="p4">Watch a Korean drama marathon</label></div>
+    </div>
+  </div>
+
+  <!-- FACTS -->
+  <div class="page" id="facts">
+    <div class="card">
+      <h2>Fun facts about us</h2>
+      <div class="stats">
+        <div><span data-count="500">0</span>Days of smiles</div>
+        <div><span data-count="1000">0</span>Messages sent</div>
+        <div><span data-count="100">0</span>Times we laughed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MUSIC -->
+  <div class="page" id="music">
+    <div class="card" id="music-card">
+      <h2>Our song</h2>
+      <div class="visualizer"><span></span><span></span><span></span><span></span><span></span></div>
+      <audio id="song" controls src="music/song.mp3"></audio>
+      <p class="lead">Replace this with why this song matters to us.</p>
+    </div>
+    <div class="card">
+      <h2>Romantic playlist</h2>
+      <p class="lead">Add the song files as music/song-1.mp3 to music/song-6.mp3.</p>
+      <div class="plan" style="display:block"><strong>1. Tum Hi Ho</strong><br><small>Aashiqui 2 · Arijit Singh</small><audio controls src="music/song-1.mp3"></audio></div>
+      <div class="plan" style="display:block"><strong>2. Pehla Nasha</strong><br><small>Jo Jeeta Wohi Sikandar · Udit Narayan, Sadhana Sargam</small><audio controls src="music/song-2.mp3"></audio></div>
+      <div class="plan" style="display:block"><strong>3. Kabhi Jo Baadal Barse</strong><br><small>Jackpot · Arijit Singh</small><audio controls src="music/song-3.mp3"></audio></div>
+      <div class="plan" style="display:block"><strong>4. Tera Ban Jaunga</strong><br><small>Kabir Singh · Akhil Sachdeva, Tulsi Kumar</small><audio controls src="music/song-4.mp3"></audio></div>
+      <div class="plan" style="display:block"><strong>5. Tu Jaane Na</strong><br><small>Ajab Prem Ki Ghazab Kahani · Atif Aslam</small><audio controls src="music/song-5.mp3"></audio></div>
+      <div class="plan" style="display:block"><strong>6. Aap Ki Nazron Ne Samjha</strong><br><small>Anpadh · Mohammed Rafi, Lata Mangeshkar</small><audio controls src="music/song-6.mp3"></audio></div>
+    </div>
+  </div>
+
+  <!-- VOICE -->
+  <div class="page" id="voice">
+    <div class="card">
+      <h2>A voice note for you</h2>
+      <p>Press play and listen to me.</p>
+      <audio controls src="music/voice.ogg"></audio>
+    </div>
+  </div>
+
+  <!-- ASK ME -->
+  <div class="page" id="ask">
+    <div class="card">
+      <h2>Ask me anything</h2>
+      <p>Type your question and tap send. It opens an email to me.</p>
+      <textarea id="question" placeholder="Your question..."></textarea>
+      <div style="text-align:center"><button id="ask-btn">Send question</button></div>
+    </div>
+  </div>
+
+  <!-- SHARE CARD -->
+  <div class="page" id="share">
+    <div class="card">
+      <h2>Make a card to save</h2>
+      <p>Write a favorite quote, make a card, and download it.</p>
+      <input type="text" id="quote" placeholder="Your quote">
+      <div style="text-align:center; margin-top:12px">
+        <button id="make-card">Make card</button>
+        <a class="btn" id="download-card" download="birthday-card.png" style="display:none">⬇️ Download</a>
+      </div>
+      <canvas id="card-canvas" width="800" height="450"></canvas>
+    </div>
+  </div>
+
+</main>
+
+<footer>Made with love, just for you.</footer>
+
+<!-- HEART: full-screen particle animation (opens from the Heart menu item) -->
+<div id="heart-overlay">
+  <canvas id="heart-canvas"></canvas>
+  <div id="heart-msg"></div>
+  <button id="heart-close" aria-label="Close">✕</button>
+  <button id="heart-replay">💖 Replay</button>
+</div>
+
+<script>
+  // Change the name here; it updates everywhere on the page.
+  const HER_NAME = "Aiza";
+  document.querySelectorAll(".name").forEach(el => el.textContent = HER_NAME);
+
+  // Replace with your email to receive "Ask me anything" questions
+  const MY_EMAIL = "your@email.com";
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // Page routing with the navigation bar
+  const heartOverlay = document.getElementById("heart-overlay");
+  // ===== Full-screen heart: tiny particles fly in and form a heart =====
+  const canvas = document.getElementById("heart-canvas");
+  const ctx = canvas.getContext("2d");
+  const heartMsg = document.getElementById("heart-msg");
+  const heartText = "I Love you Meri Pyari Si Guriya";
+  const PARTICLE_COUNT = 1600;
+  let particles = [], stars = [], animId = null, startTime = 0, typeTimer = null, typeTimeout = null;
+  let W = 0, H = 0, CX = 0, CY = 0, SCALE = 1;
+  function showPage() {
+    const id = location.hash.slice(1);
+    const target = document.getElementById(id);
+    const page = id === "heart" || (target && target.classList.contains("page")) ? id : "home";
+    document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === page));
+    document.querySelectorAll("nav a").forEach(a => a.classList.toggle("active", a.getAttribute("href") === "#" + page));
+    if (page === "heart") {
+      heartOverlay.style.display = "block";
+      startHeart();
+    } else {
+      heartOverlay.style.display = "none";
+      stopHeart();
+    }
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", showPage);
+  if (!location.hash) location.hash = "#home";
+  showPage();
+
+  // Theme toggle
+  document.getElementById("theme-btn").onclick = () => {
+    const root = document.documentElement;
+    root.setAttribute("data-theme", root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  };
+
+  // Countdown to 23 November, midnight. Month index 10 = November.
+  const birthday = new Date(2026, 10, 23, 0, 0, 0);
+  function updateCountdown() {
+    const diff = birthday - new Date();
+    if (diff <= 0) {
+      document.getElementById("countdown").style.display = "none";
+      document.getElementById("teaser").style.display = "none";
+      document.getElementById("reveal").style.display = "block";
+      return;
+    }
+    document.getElementById("d").textContent = Math.floor(diff / 86400000);
+    document.getElementById("h").textContent = Math.floor((diff % 86400000) / 3600000);
+    document.getElementById("m").textContent = Math.floor((diff % 3600000) / 60000);
+    document.getElementById("s").textContent = Math.floor((diff % 60000) / 1000);
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+  // Photos slideshow with tap-to-read stories. Replace captions and stories.
+  const photos = [
+    { src: "photos/1.jpeg", story: "Story for photo 1: replace with your memory." },
+    { src: "photos/2.jpeg", story: "Story for photo 2: replace with your memory." },
+    { src: "photos/3.jpeg", story: "Story for photo 3: replace with your memory." },
+    { src: "photos/4.jpeg", story: "Story for photo 4: replace with your memory." },
+    { src: "photos/5.jpeg", story: "Story for photo 5: replace with your memory." },
+    { src: "photos/6.jpeg", story: "Story for photo 6: replace with your memory." }
+  ];
+  let current = 0;
+  const img = document.getElementById("photo");
+  const storyText = document.getElementById("story-text");
+  let storyOpen = false;
+  function renderStory() {
+    const btn = document.getElementById("reveal-story");
+    storyText.textContent = storyOpen ? photos[current].story : "";
+    btn.textContent = storyOpen ? "Hide the story" : "Tap to read the story";
+  }
+  function showPhoto(i) {
+    img.src = photos[i].src;
+    renderStory();
+  }
+  document.getElementById("prev").onclick = () => { current = (current - 1 + photos.length) % photos.length; showPhoto(current); };
+  document.getElementById("next").onclick = () => { current = (current + 1) % photos.length; showPhoto(current); };
+  document.getElementById("reveal-story").onclick = () => { storyOpen = !storyOpen; renderStory(); };
+  showPhoto(0);
+
+  // Wish jar
+  const wishes = [
+    "A trip to Murree together",
+    "A biryani dinner cooked with your mother",
+    "A reading corner with your favorite novels",
+    "A Korean drama marathon night",
+    "A shopping day at Centaurus Mall",
+    "A picnic at Ayub Park"
+  ];
+  document.getElementById("jar").onclick = () => {
+    document.getElementById("wish-text").textContent = "✨ " + wishes[Math.floor(Math.random() * wishes.length)];
+  };
+
+  // Game 1: memory match
+  const symbols = ["🌸", "🍰", "📚", "🎬", "🌙", "🦋", "🍛", "🌹"];
+  let deck = [], flipped = [], lock = false, matches = 0;
+  function startMemory() {
+    deck = shuffle([...symbols, ...symbols]).map((s, i) => ({ id: i, s, open: false, done: false }));
+    flipped = []; lock = false; matches = 0;
+    document.getElementById("memory-status").textContent = "";
+    drawMemory();
+  }
+  function drawMemory() {
+    const box = document.getElementById("memory");
+    box.innerHTML = "";
+    deck.forEach(card => {
+      const btn = document.createElement("button");
+      btn.textContent = card.open || card.done ? card.s : "?";
+      if (card.open) btn.classList.add("open");
+      if (card.done) btn.classList.add("done");
+      btn.onclick = () => flipCard(card);
+      box.appendChild(btn);
+    });
+  }
+  function flipCard(card) {
+    if (lock || card.open || card.done) return;
+    card.open = true;
+    flipped.push(card);
+    drawMemory();
+    if (flipped.length === 2) {
+      lock = true;
+      const [a, b] = flipped;
+      if (a.s === b.s) {
+        a.done = b.done = true; a.open = b.open = false;
+        matches++; flipped = []; lock = false;
+        if (matches === symbols.length) document.getElementById("memory-status").textContent = "You found them all! 🎉";
+        drawMemory();
+      } else {
+        setTimeout(() => {
+          a.open = b.open = false; flipped = []; lock = false;
+          drawMemory();
+        }, 800);
+      }
+    }
+  }
+  document.getElementById("memory-reset").onclick = startMemory;
+  startMemory();
+
+  // Game 2: catch the hearts (20 seconds)
+  const area = document.getElementById("catch-area");
+  const scoreEl = document.getElementById("catch-score");
+  const timeEl = document.getElementById("catch-time");
+  const startBtn = document.getElementById("catch-start");
+  const hearts = ["❤️", "💖", "💕", "💗"];
+  let catchScore = 0, catchTimeLeft = 20, spawnTimer = null, tickTimer = null, moveTimer = null;
+  function spawnHeart() {
+    const h = document.createElement("span");
+    h.className = "heart-drop";
+    h.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+    h.style.left = Math.floor(Math.random() * 90) + "%";
+    h.style.top = "-40px";
+    h.onclick = () => { catchScore++; scoreEl.textContent = catchScore; h.remove(); };
+    area.appendChild(h);
+  }
+  function endCatch() {
+    clearInterval(spawnTimer); clearInterval(tickTimer); clearInterval(moveTimer);
+    area.querySelectorAll(".heart-drop").forEach(h => h.remove());
+    startBtn.disabled = false;
+    startBtn.textContent = "Play again";
+    timeEl.textContent = "0";
+    alert(`Time's up! You caught ${catchScore} hearts 💖`);
+  }
+  startBtn.onclick = () => {
+    catchScore = 0; catchTimeLeft = 20;
+    scoreEl.textContent = 0; timeEl.textContent = 20;
+    startBtn.disabled = true;
+    spawnTimer = setInterval(spawnHeart, 600);
+    moveTimer = setInterval(() => {
+      area.querySelectorAll(".heart-drop").forEach(h => {
+        h.style.top = (parseFloat(h.style.top) + 4) + "px";
+        if (parseFloat(h.style.top) > area.offsetHeight) h.remove();
+      });
+    }, 50);
+    tickTimer = setInterval(() => {
+      catchTimeLeft--;
+      timeEl.textContent = catchTimeLeft;
+      if (catchTimeLeft <= 0) endCatch();
+    }, 1000);
+  };
+
+  // Fun facts counters
+  document.querySelectorAll("[data-count]").forEach(el => {
+    const target = Number(el.dataset.count);
+    let n = 0;
+    const step = Math.max(1, Math.ceil(target / 60));
+    const timer = setInterval(() => {
+      n += step;
+      if (n >= target) { n = target; clearInterval(timer); }
+      el.textContent = n;
+    }, 30);
+  });
+
+  // Music visualizer: bars bounce while the song plays
+  const song = document.getElementById("song");
+  const musicCard = document.getElementById("music-card");
+  song.addEventListener("play", () => musicCard.classList.add("playing"));
+  song.addEventListener("pause", () => musicCard.classList.remove("playing"));
+  song.addEventListener("ended", () => musicCard.classList.remove("playing"));
+
+  // Ask me anything: opens an email to you
+  document.getElementById("ask-btn").onclick = () => {
+    const q = document.getElementById("question").value.trim();
+    if (!q) return;
+    location.href = `mailto:${MY_EMAIL}?subject=${encodeURIComponent("A question for you")}&body=${encodeURIComponent(q)}`;
+  };
+
+  // Share card: draw a quote card and offer it as a PNG download
+  document.getElementById("make-card").onclick = () => {
+    const canvas = document.getElementById("card-canvas");
+    const ctx = canvas.getContext("2d");
+    const quote = document.getElementById("quote").value.trim() || "You make every day brighter.";
+    const grad = ctx.createLinearGradient(0, 0, 800, 450);
+    grad.addColorStop(0, "#c2185b");
+    grad.addColorStop(1, "#7b1fa2");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 800, 450);
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.font = "bold 40px Segoe UI, Arial, sans-serif";
+    wrapText(ctx, quote, 400, 200, 680, 52);
+    ctx.font = "26px Segoe UI, Arial, sans-serif";
+    ctx.fillText("— for " + HER_NAME, 400, 380);
+    canvas.style.display = "block";
+    const link = document.getElementById("download-card");
+    link.href = canvas.toDataURL("image/png");
+    link.style.display = "inline-block";
+  };
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(" ");
+    let line = "", lines = [];
+    words.forEach(word => {
+      const test = line + word + " ";
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line.trim());
+        line = word + " ";
+      } else {
+        line = test;
+      }
+    });
+    lines.push(line.trim());
+    const startY = y - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((l, i) => ctx.fillText(l, x, startY + i * lineHeight));
+  }
+
+  // Reactions: a row of emoji buttons at the bottom of every page (saved on her device)
+  const reactionEmojis = ["❤️", "😍", "🥰", "😂", "😭"];
+  let reactionCounts = {};
+  try { reactionCounts = JSON.parse(localStorage.getItem("reactions") || "{}"); } catch (e) { reactionCounts = {}; }
+  document.querySelectorAll(".page").forEach(page => {
+    if (page.id === "heart") return;
+    const bar = document.createElement("div");
+    bar.className = "reactions";
+    reactionEmojis.forEach(emoji => {
+      const key = page.id + ":" + emoji;
+      const btn = document.createElement("button");
+      btn.textContent = emoji + " " + (reactionCounts[key] || 0);
+      btn.onclick = () => {
+        reactionCounts[key] = (reactionCounts[key] || 0) + 1;
+        btn.textContent = emoji + " " + reactionCounts[key];
+        btn.classList.add("reacted");
+        try { localStorage.setItem("reactions", JSON.stringify(reactionCounts)); } catch (e) {}
+      };
+      bar.appendChild(btn);
+    });
+    page.appendChild(bar);
+  });
+
+
+  function resizeHeart() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    CX = W / 2;
+    CY = H / 2;
+    SCALE = Math.min((W * 0.8) / 32, (H * 0.7) / 30);
+    stars = Array.from({ length: 120 }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 1.2 + 0.3, a: Math.random()
+    }));
+  }
+
+  // Classic parametric heart outline (relative coordinates, center at 0,0)
+  function heartPoint(t) {
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    return { x, y: -y }; // flip so the heart points up
+  }
+
+  function makeParticles() {
+    particles = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const t = Math.random() * Math.PI * 2;
+      const p = heartPoint(t);
+      const inner = Math.sqrt(Math.random()); // fill the inside too, not just the outline
+      particles.push({
+        sx: Math.random() * W,                 // scattered start
+        sy: Math.random() * H,
+        tx: p.x * inner * SCALE,               // heart target (relative to center)
+        ty: p.y * inner * SCALE,
+        size: Math.random() * 2 + 1.2,
+        hue: 330 + Math.random() * 25,
+        light: 55 + Math.random() * 25,
+        delay: Math.random() * 1200,           // staggered start
+        wobble: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function easeInOut(x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+
+  function drawFrame(now) {
+    const elapsed = now - startTime;
+    ctx.fillStyle = "#14010f";
+    ctx.fillRect(0, 0, W, H);
+
+    // background stars
+    stars.forEach(s => {
+      ctx.globalAlpha = 0.3 + 0.5 * Math.abs(Math.sin(elapsed / 800 + s.a * 10));
+      ctx.fillStyle = "#ffd6e8";
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // heart pulse after it has formed
+    const formTime = 3800;
+    const pulse = elapsed > formTime ? 1 + 0.035 * Math.sin((elapsed - formTime) / 260) : 1;
+
+    particles.forEach(p => {
+      const local = Math.min(1, Math.max(0, (elapsed - p.delay) / 2600));
+      const e = easeInOut(local);
+      const wob = local >= 1 ? Math.sin(elapsed / 500 + p.wobble) * 1.5 : 0;
+      const tx = (CX + p.tx * pulse) + wob;
+      const ty = (CY + p.ty * pulse) + wob;
+      const x = p.sx + (tx - p.sx) * e;
+      const y = p.sy + (ty - p.sy) * e;
+      ctx.fillStyle = `hsl(${p.hue}, 95%, ${p.light}%)`;
+      ctx.beginPath();
+      ctx.arc(x, y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    animId = requestAnimationFrame(drawFrame);
+  }
+
+  function typeHeartMessage() {
+    heartMsg.textContent = "";
+    clearInterval(typeTimer);
+    clearTimeout(typeTimeout);
+    let i = 0;
+    typeTimeout = setTimeout(() => {
+      typeTimer = setInterval(() => {
+        heartMsg.textContent = heartText.slice(0, ++i);
+        if (i >= heartText.length) clearInterval(typeTimer);
+      }, 90);
+    }, 4000);
+  }
+
+  function startHeart() {
+    cancelAnimationFrame(animId);
+    resizeHeart();
+    makeParticles();
+    startTime = performance.now();
+    typeHeartMessage();
+    animId = requestAnimationFrame(drawFrame);
+  }
+
+  function stopHeart() {
+    cancelAnimationFrame(animId);
+    clearInterval(typeTimer);
+    clearTimeout(typeTimeout);
+  }
+
+  document.getElementById("heart-close").onclick = () => { location.hash = "#home"; };
+  document.getElementById("heart-replay").onclick = startHeart;
+  window.addEventListener("resize", () => { if (location.hash === "#heart") startHeart(); });
+</script>
+
+</body>
+</html>
